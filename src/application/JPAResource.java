@@ -10,25 +10,29 @@
  *******************************************************************************/
 package application;
 
-import java.io.IOException;
 import java.util.List;
 
+import javax.enterprise.context.RequestScoped;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
-@Path("/")
+@Path("/db")
+@RequestScoped
 public class JPAResource {
 
     /**
@@ -38,23 +42,12 @@ public class JPAResource {
 
     private static String newline = System.getProperty("line.separator");
 
-    @GET
-    @Produces("text/plain")
-    public String getInformation() throws IOException {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Hello JPA World").append(newline);
-
-        try {
-            // First create a Thing in the database, then retrieve it
-            createThing(builder);
-            retrieveThing(builder);
-        } catch (Exception e) {
-            builder.append("Something went wrong. Caught exception " + e).append(newline);
-        }
-        return builder.toString();
-    }
-
-    public void createThing(StringBuilder builder)
+    @PersistenceContext(unitName = "myPersistenceUnit")
+    EntityManager em;
+    
+    @POST
+    @Consumes("text/plain")
+    public void createThing()
             throws NamingException, NotSupportedException, SystemException, IllegalStateException, SecurityException,
             HeuristicMixedException, HeuristicRollbackException, RollbackException {
         Context ctx = new InitialContext();
@@ -63,8 +56,8 @@ public class JPAResource {
         tran.begin();
 
         // Now get the EntityManager from JNDI
-        EntityManager em = (EntityManager) ctx.lookup(JNDI_NAME);
-        builder.append("Creating a brand new Thing with " + em.getDelegate().getClass()).append(newline);
+        //EntityManager em = (EntityManager) ctx.lookup(JNDI_NAME);
+        StringBuilder builder = new StringBuilder().append("Creating a brand new Thing with " + em.getDelegate().getClass()).append(newline);
 
         // Create a Thing object and persist it to the database
         Thing thing = new Thing();
@@ -74,13 +67,19 @@ public class JPAResource {
         tran.commit();
         int id = thing.getId();
         builder.append("Created Thing " + id + ":  " + thing).append(newline);
+        System.out.println("SKSK: " + builder.toString());
     }
 
-    @SuppressWarnings("unchecked")
-    public void retrieveThing(StringBuilder builder) throws SystemException, NamingException {
+    @GET
+    @Produces("text/plain")
+    public String retrieveThing() throws SystemException, NamingException {
+    	
+        StringBuilder builder = new StringBuilder();
+        builder.append("Hello JPA World").append(newline);
+
         // Look up the EntityManager in JNDI
         Context ctx = new InitialContext();
-        EntityManager em = (EntityManager) ctx.lookup(JNDI_NAME);
+        //EntityManager em = (EntityManager) ctx.lookup(JNDI_NAME);
         // Compose a JPQL query
         String query = "SELECT t FROM Thing t";
         Query q = em.createQuery(query);
@@ -93,5 +92,6 @@ public class JPAResource {
         for (Thing thing : things) {
             builder.append("Thing in list " + thing).append(newline);
         }
+        return builder.toString();
     }
 }
