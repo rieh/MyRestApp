@@ -10,35 +10,29 @@
  *******************************************************************************/
 package application;
 
-import java.util.List;
-
+import javax.annotation.security.DenyAll;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.RequestScoped;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
+import javax.persistence.TypedQuery;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 
 @Path("/db")
 @RequestScoped
-public class JPAResource {
 
-    /**
-     * The JNDI name for the persistence context is the one defined in web.xml
-     */
-    private static final String JNDI_NAME = "java:comp/env/jpasample/entitymanager";
+//@DenyAll
+@PermitAll
+public class JPAResource {
 
     private static String newline = System.getProperty("line.separator");
 
@@ -47,16 +41,14 @@ public class JPAResource {
     
     @POST
     @Consumes("text/plain")
-    public void createThing()
-            throws NamingException, NotSupportedException, SystemException, IllegalStateException, SecurityException,
-            HeuristicMixedException, HeuristicRollbackException, RollbackException {
+    
+  //  @RolesAllowed("Admin")    
+    public void createThing() throws Exception {
         Context ctx = new InitialContext();
         // Before getting an EntityManager, start a global transaction
         UserTransaction tran = (UserTransaction) ctx.lookup("java:comp/UserTransaction");
         tran.begin();
 
-        // Now get the EntityManager from JNDI
-        //EntityManager em = (EntityManager) ctx.lookup(JNDI_NAME);
         StringBuilder builder = new StringBuilder().append("Creating a brand new Thing with " + em.getDelegate().getClass()).append(newline);
 
         // Create a Thing object and persist it to the database
@@ -72,26 +64,40 @@ public class JPAResource {
 
     @GET
     @Produces("text/plain")
-    public String retrieveThing() throws SystemException, NamingException {
+    //@RolesAllowed("Employee")
+    public String retrieveThing(@QueryParam("id") int id) throws Exception {
     	
         StringBuilder builder = new StringBuilder();
         builder.append("Hello JPA World").append(newline);
 
-        // Look up the EntityManager in JNDI
-        Context ctx = new InitialContext();
-        //EntityManager em = (EntityManager) ctx.lookup(JNDI_NAME);
         // Compose a JPQL query
-        String query = "SELECT t FROM Thing t";
-        Query q = em.createQuery(query);
+        String query = "SELECT t FROM Thing t WHERE t.id = " + id;
+        TypedQuery<Thing> q = em.createQuery(query,  Thing.class);
 
         // Execute the query
-        List<Thing> things = q.getResultList();
-        builder.append("Query returned " + things.size() + " things").append(newline);
+        Thing t = q.getSingleResult();
+        
+        builder.append("Query returned " + t);
+        return builder.toString();
+    }
+    
+    @GET
+    @Produces("text/plain")
+    @Path("/count")    
+    @PermitAll
+    public String getCount() throws Exception {
+    	
+        StringBuilder builder = new StringBuilder();
+        builder.append("Hello JPA World").append(newline);
+        
+        // Compose a JPQL query
+        String query = "SELECT COUNT(t) FROM Thing t";
+        TypedQuery<Long> q = em.createQuery(query,  Long.class);
 
-        // Let's see what we got back!
-        for (Thing thing : things) {
-            builder.append("Thing in list " + thing).append(newline);
-        }
+        // Execute the query
+        Long count = q.getSingleResult();
+        builder.append("Query returned " + count + " number of things");
+        
         return builder.toString();
     }
 }
