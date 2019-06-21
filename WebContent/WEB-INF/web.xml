@@ -19,4 +19,10 @@
 		<persistence-context-ref-name>jpasample/entitymanager</persistence-context-ref-name>
 		<persistence-unit-name>jpasamplepersistenceunit</persistence-unit-name>
 	</persistence-context-ref>
+	<security-role>
+		<role-name>Admin</role-name>
+	</security-role>
+	<security-role>
+		<role-name>Employee</role-name>
+	</security-role>
 </web-app>

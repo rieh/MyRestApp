@@ -56,6 +56,6 @@ public class Thing implements Serializable {
 
     @Override
     public String toString() {
-        return "Thing[" + id + "], with generic description";
+        return "Thing[" + id + "]";
     }
 }

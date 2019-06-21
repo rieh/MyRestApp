@@ -30,8 +30,7 @@ import javax.ws.rs.QueryParam;
 @Path("/db")
 @RequestScoped
 
-//@DenyAll
-@PermitAll
+@DenyAll
 public class JPAResource {
 
     private static String newline = System.getProperty("line.separator");
@@ -42,7 +41,7 @@ public class JPAResource {
     @POST
     @Consumes("text/plain")
     
-  //  @RolesAllowed("Admin")    
+    @RolesAllowed("Admin")    
     public void createThing() throws Exception {
         Context ctx = new InitialContext();
         // Before getting an EntityManager, start a global transaction
@@ -64,7 +63,7 @@ public class JPAResource {
 
     @GET
     @Produces("text/plain")
-    //@RolesAllowed("Employee")
+    @RolesAllowed("Employee")
     public String retrieveThing(@QueryParam("id") int id) throws Exception {
     	
         StringBuilder builder = new StringBuilder();
